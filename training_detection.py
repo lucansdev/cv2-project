@@ -1,33 +1,33 @@
-import cv2 
 from PIL import Image
 import os
 import numpy as np
-def dados_imagem():
-    caminhos = [os.path.join("fotos_minha",f) for f in os.listdir("fotos_minha")]
-    faces = []
-    ids = []
-    for caminho in caminhos:
-        imagem = Image.open(caminho).convert("L")
-        imagem_np = np.array(imagem,"uint8")
-        id = int(os.path.split(caminho)[1].split('.')[0].replace('subject', ''))
-        ids.append(id)
-        faces.append(imagem_np)
-    return np.array(ids),faces
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import StandardScaler
+import pickle
+caminhos = [os.path.join("pictures_new_ai",f) for f in os.listdir("pictures_new_ai")]
 
-ids,faces = dados_imagem()
+target_size = (64,64)
+
+ids = [2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4]
+data_file = []
+for new_images in caminhos:
+    with Image.open(new_images) as image:
+        image = image.convert("L")
+        image_resized = image.resize(target_size)
+        image_np = np.array(image_resized)
+        imagem_np = [value for i in image_np for value in i]
+        data_file.append(imagem_np)
 
 
-lbph = cv2.face.LBPHFaceRecognizer_create()
-lbph.train(faces,ids)
-lbph.write("classificador_eu.yml")
+data_file = np.array(data_file)
 
-reconhecedor = cv2.face.LBPHFaceRecognizer_create()
-reconhecedor.read("classificador_eu.yml")
+stander = StandardScaler()
+data_file = stander.fit_transform(data_file)
 
-imagem_teste = f"{os.path.join("fotos_minha\subject03.nada.gif")}"
 
-imagem = Image.open(imagem_teste).convert("L")
-imagem_np = np.array(imagem,"uint8")
+ai = MLPClassifier(max_iter=1000,hidden_layer_sizes=(10,10,10,10),activation="relu",solver="adam")
+ai.fit(data_file,ids)
 
-idprevisto,_ = reconhecedor.predict(imagem_np)
-print(idprevisto)
+
+with open("AI_better.sav","wb") as file:
+    pickle.dump(ai,file)
