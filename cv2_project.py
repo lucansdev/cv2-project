@@ -1,37 +1,45 @@
 import cv2
-from PIL import Image
+import pickle
 import numpy as np
+from sklearn.preprocessing import StandardScaler
 rastreador = cv2.TrackerCSRT_create()
-reconhecedor = cv2.face.LBPHFaceRecognizer_create()
-reconhecedor.read("classifier_me.yml")
+with open("AI_better.sav","rb") as file:
+    ai = pickle.load(file)
 
 video = cv2.VideoCapture(0)
-ok,frame = video.read()
+ok,frames = video.read()
 
 detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
-imagem = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+imagem = cv2.cvtColor(frames, cv2.COLOR_BGR2GRAY)
 
-deteccoes  = detector.detectMultiScale(imagem,1.2)
+deteccoes  = detector.detectMultiScale(imagem,scaleFactor=1.1,minSize=(30,30))
 
-ok = rastreador.init(frame,*deteccoes)
+okk = rastreador.init(frames,*deteccoes)
+
+imagem_modificada = [value for i in imagem for value in i]
+new_imagem = [imagem_modificada]
+
+new_image = np.resize(new_imagem,4096).reshape(1,-1)
+
+stander = StandardScaler()
+new_image_standard = stander.fit_transform(new_image)
 
 
-idprevisto,_ = reconhecedor.predict(imagem)
-print(idprevisto)
+idprevisto = ai.predict(new_image_standard)
 
 while True:
-    ok,frame = video.read()
-    if not ok:
+    oks,frame = video.read()
+    if not oks:
         break
 
-    ok,bbox = rastreador.update(frame)
+    okk,bbox = rastreador.update(frame)
     
     
-    if ok:
+    if okk:
         (x,y,w,h) = [int(v) for v in bbox]
         cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2,1)
-        if idprevisto == 1:
+        if idprevisto == 4:
             cv2.putText(frame,"lucas",(x,y+30),cv2.FONT_HERSHEY_COMPLEX_SMALL,0.75,(0,0,255),2)
         elif idprevisto == 2:
             cv2.putText(frame,"bruna",(x,y+30),cv2.FONT_HERSHEY_COMPLEX_SMALL,0.75,(0,0,255),2)
@@ -40,6 +48,13 @@ while True:
 
     else:
         cv2.putText(frame,"falha no rastreamento",(100,80),cv2.FONT_HERSHEY_COMPLEX_SMALL,0.75,(0,0,255),2)
+        exit()
+
+    cv2.imshow("rastreando",frame)
+    if cv2.waitKey(1) & 0xFF == 27:
+        break
+
+
 
     cv2.imshow("rastreando",frame)
     if cv2.waitKey(1) & 0xFF == 27:
