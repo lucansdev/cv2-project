@@ -1,5 +1,3 @@
-from PIL import Image
-import os
 import numpy as np
 from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import StandardScaler
@@ -8,7 +6,7 @@ caminhos = [os.path.join("pictures_new_ai",f) for f in os.listdir("pictures_new_
 
 target_size = (64,64)
 
-ids = [2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4]
+ids = [2,2,2,2,3,3,3,3,3,4,4,4,4,4,4,4,4,4]
 data_file = []
 for new_images in caminhos:
     with Image.open(new_images) as image:
@@ -19,14 +17,14 @@ for new_images in caminhos:
         data_file.append(imagem_np)
 
 
-data_file = np.array(data_file)
+data_file_np = np.array(data_file)
 
 stander = StandardScaler()
-data_file = stander.fit_transform(data_file)
+data_file_stander = stander.fit_transform(data_file_np)
 
 
-ai = MLPClassifier(max_iter=1000,hidden_layer_sizes=(10,10,10,10),activation="relu",solver="adam")
-ai.fit(data_file,ids)
+ai = MLPClassifier(max_iter=1500,hidden_layer_sizes=(10,10),activation="relu",solver="adam")
+ai.fit(data_file_stander,ids)
 
 
 with open("AI_better.sav","wb") as file:
